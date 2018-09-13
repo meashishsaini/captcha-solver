@@ -1,0 +1,7 @@
+tensorflow
+requests
+opencv_python
+numpy
+imutils
+Pillow
+scikit_learn

@@ -1,3 +1,5 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 from tensorflow import keras
 from helpers import resize_to_fit
@@ -9,7 +11,7 @@ import pickle
 import requests
 import cv2
 
-MODEL_FILENAME = "captcha_models/captcha_model.hdf5"
+MODEL_FILENAME = "captcha_models/captcha_model"
 MODEL_LABELS_FILENAME = "captcha_models/captcha_model_labels.dat"
 
 # Load up the model labels (so we can translate model predictions to actual letters)
@@ -63,7 +65,7 @@ if captcha_image_file.status_code == requests.codes.OK: #pylint: disable=E1101
 	contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 	# # Hack for compatibility with different OpenCV versions
-	contours = contours[0] if imutils.is_cv2() else contours[1]
+	contours = contours[0] #if imutils.is_cv2() else contours[1]
 
 	letter_image_regions = []
 
@@ -127,8 +129,8 @@ if captcha_image_file.status_code == requests.codes.OK: #pylint: disable=E1101
 			predictions.append(letter)
 
 			# draw the prediction on the output image
-			cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 255, 0), 1)
-			cv2.putText(output, letter, (x - 5, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
+			cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (128, 0, 255), 1)
+			cv2.putText(output, letter, (x - 5, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (128, 0, 255), 2)
 
 		# Print the captcha's text
 		captcha_text = "".join(predictions)

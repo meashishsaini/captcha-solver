@@ -1,7 +1,7 @@
+import os
 import tensorflow as tf
 from tensorflow import keras
 from imutils import paths
-import os.path
 import cv2
 import pickle
 from helpers import resize_to_fit
@@ -14,15 +14,15 @@ DIGIT_SUB = 'digit'
 UPPER_SUB = 'upper'
 LOWER_SUB = 'lower'
 
-MODEL_LABELS_FILENAME = "captcha_model_labels.dat"
-MODEL_FILENAME = "captcha_model.hdf5"
+MODEL_FILENAME = "captcha_models/captcha_model"
+MODEL_LABELS_FILENAME = "captcha_models/captcha_model_labels.dat"
 
 # initialize the data and labels
 data = []
 labels = []
 
 # loop over the input digits images
-for image_file in paths.list_images(LETTER_IMAGES_FOLDER + '\\' + DIGIT_SUB):
+for image_file in paths.list_images(os.path.join(LETTER_IMAGES_FOLDER, DIGIT_SUB)):
 	# Load the image and convert it to grayscale
 	image = cv2.imread(image_file)
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -38,7 +38,7 @@ for image_file in paths.list_images(LETTER_IMAGES_FOLDER + '\\' + DIGIT_SUB):
 	labels.append(label)
 
 # loop over the input upper case images
-for image_file in paths.list_images(LETTER_IMAGES_FOLDER + '\\' + UPPER_SUB):
+for image_file in paths.list_images(os.path.join(LETTER_IMAGES_FOLDER, UPPER_SUB)):
 	# Load the image and convert it to grayscale
 	image = cv2.imread(image_file)
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -54,7 +54,7 @@ for image_file in paths.list_images(LETTER_IMAGES_FOLDER + '\\' + UPPER_SUB):
 	labels.append(label)
 
 # loop over the input lower case images
-for image_file in paths.list_images(LETTER_IMAGES_FOLDER + '\\' + LOWER_SUB):
+for image_file in paths.list_images(os.path.join(LETTER_IMAGES_FOLDER, LOWER_SUB)):
 	# Load the image and convert it to grayscale
 	image = cv2.imread(image_file)
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -84,7 +84,7 @@ Y_test = lb.transform(Y_test)
 # Save the mapping from labels to one-hot encodings.
 # We'll need this later when we use the model to decode what it's predictions mean
 with open(MODEL_LABELS_FILENAME, "wb") as f:
-    pickle.dump(lb, f)
+	pickle.dump(lb, f)
 
 model = keras.Sequential()
 
@@ -100,22 +100,26 @@ model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(keras.layers.Flatten())
 model.add(keras.layers.Dense(250, activation=tf.nn.relu))
 
-# Output layer with 52 nodes (one for each possible letter/number we predict)
-model.add(keras.layers.Dense(52, activation=tf.nn.softmax))
+# Output layer with 53 nodes (one for each possible letter/number we predict)
+# Upper 24 and lower 20 english alphabets and 9 digits
+model.add(keras.layers.Dense(53, activation=tf.nn.softmax))
 
 
 # Ask Keras to build the TensorFlow model behind the scenes
 model.compile(optimizer=keras.optimizers.Adam(), 
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+				loss='categorical_crossentropy',
+				metrics=['accuracy'])
+
+# Print summary
+model.summary()
 
 # Train the neural network
-model.fit(X_train, Y_train, validation_data=(X_test, Y_test), batch_size=52, epochs=5, verbose=1)
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), batch_size=53, epochs=5, verbose=1)
 
-# Evaluate the accuracy of the model
+# # Evaluate the accuracy of the model
 test_loss, test_acc = model.evaluate(X_test, Y_test)
 
 print('Test accuracy:', test_acc)
 
-# Save the trained model to disk
+# # Save the trained model to disk
 model.save(MODEL_FILENAME)
